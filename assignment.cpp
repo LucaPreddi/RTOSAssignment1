@@ -1,5 +1,5 @@
 // Compile with: 
-// $ g++ assignment.c -lpthread -o assignment
+// $ g++ assignment.c -pthread -o assignment
 // ./assignment
 
 #include <pthread.h>
@@ -16,10 +16,12 @@ void task2_code( );
 void task3_code( );
 void task4_code( );
 
+double U;
 //code of aperiodic tasks (if any)
 
 //characteristic function of the thread, only for timing and synchronization
 //periodic tasks
+
 void *task1( void *);
 void *task2( void *);
 void *task3( void *);
@@ -35,10 +37,15 @@ pthread_mutex_t T1T2_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t T1T4_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t T2T3_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Declaring time structs for tasks.
+
+struct timespec start_1, end_1, start_2, end_2, start_3, end_3, start_4, end_4, start_5, end_5;
+double Z12, Z14, blocking1, Z12a, Z23, blocking2, blocking3, blocking4;
+
 // initialization of mutexes and conditions (only for aperiodic scheduling)
 
-#define INNERLOOP 500
-#define OUTERLOOP 100
+#define INNERLOOP 1000
+#define OUTERLOOP 1000
 
 #define NPERIODICTASKS 4
 #define NAPERIODICTASKS 0
@@ -51,6 +58,13 @@ pthread_attr_t attributes[NTASKS];
 pthread_t thread_id[NTASKS];
 struct sched_param parameters[NTASKS];
 int missed_deadlines[NTASKS];
+
+void wastetime(){
+	float guardie;
+	for (int j = 0; j < OUTERLOOP; j++){
+			guardie = rand()*rand();
+	}
+}
 
 int main()
 {
@@ -108,7 +122,6 @@ int main()
 
 		clock_gettime(CLOCK_REALTIME, &time_2);
 
-
 		// compute the Worst Case Execution Time (in a real case, we should repeat this many times under
 		//different conditions, in order to have reliable values
 
@@ -117,24 +130,51 @@ int main()
       		printf("\nWorst Case Execution Time %d=%f \n", i, WCET[i]);
     	}
 
-    	// compute U
-	double U = WCET[0]/periods[0]+WCET[1]/periods[1]+WCET[2]/periods[2]+WCET[3]/periods[3];
+    // compute U
+	
 
     // compute Ulub by considering the fact that we have harmonic relationships between periods
-	//double Ulub = 1;
+	double Ulub;
     	
 	//if there are no harmonic relationships, use the following formula instead
-	double Ulub = NPERIODICTASKS*(pow(2.0,(1.0/NPERIODICTASKS)) -1);
+	for(int i = 1 ; i<=NPERIODICTASKS; i++){
 	
-	//check the sufficient conditions: if they are not satisfied, exit  
-  	if (U > Ulub)
-    	{
-      		printf("\n U=%lf Ulub=%lf Non schedulable Task Set", U, Ulub);
+		Ulub = i*(pow(2.0,(1.0/i)) -1);
+
+		switch(i){
+
+			case(1):
+				U = WCET[i-1]/periods[i-1] + blocking1/(periods[i-1]);	
+				printf("U1: %f, Ulub: %f\n", U, Ulub); fflush(stdout);
+			break;
+
+			case(2):
+				U = WCET[i-1]/periods[i-1] + WCET[i-2]/periods[i-2] + blocking2/(periods[i-1]);
+				printf("U2: %f, Ulub: %f\n", U, Ulub); fflush(stdout);
+			break;
+
+			case(3):
+				U = WCET[i-1]/periods[i-1] + WCET[i-2]/periods[i-2] + WCET[i-3]/periods[i-3] + blocking3/(periods[i-1]);
+				printf("U3: %f, Ulub: %f\n", U, Ulub); fflush(stdout);
+			break;
+
+			case(4):
+				U = WCET[i-1]/periods[i-1] + WCET[i-2]/periods[i-2] + WCET[i-3]/periods[i-3] + WCET[i-4]/periods[i-4] + blocking4/(periods[i-4]);
+				printf("U4: %f, Ulub: %f\n", U, Ulub); fflush(stdout);
+
+			break;
+		}
+
+		if (U > Ulub){
+      		printf("\n U=%lf Ulub=%lf Non schedulable Task Set, %d", U, Ulub, i);
       		return(-1);
     	}
-  	printf("\n U=%lf Ulub=%lf Scheduable Task Set", U, Ulub);
-  	fflush(stdout);
-  	sleep(5);
+	}
+	printf("\n U=%lf Ulub=%lf schedulable test", U, Ulub);
+	fflush(stdout);
+  	sleep(2);
+	//check the sufficient conditions: if they are not satisfied, exit  
+
 
   	// set the minimum priority to the current thread: this is now required because 
 	//we will assign higher priorities to periodic threads to be soon created
@@ -171,8 +211,8 @@ int main()
 	pthread_mutex_init(&T1T2_mutex, &mymutexattr); 
 	pthread_mutexattr_setprioceiling(&mymutexattr, parameters[1].sched_priority); 
 	pthread_mutex_init(&T2T3_mutex, &mymutexattr);
-	pthread_mutexattr_setprioceiling(&mymutexattr, parameters[0].sched_priority); 
-	pthread_mutex_init(&T1T4_mutex, &mymutexattr); 
+	pthread_mutexattr_setprioceiling(&mymutexattr, parameters[0].sched_priority);
+	pthread_mutex_init(&T1T4_mutex, &mymutexattr);
 
  	// aperiodic tasks
 
@@ -226,20 +266,32 @@ void task1_code()
 {
 	//print the id of the current task
   	printf(" 1[ "); fflush(stdout);
+	pthread_mutex_lock(&T1T2_mutex);
+	clock_gettime(CLOCK_REALTIME, &start_1);
+	wastetime();
+	T1T2 += 1;
+	clock_gettime(CLOCK_REALTIME, &end_1);
+	pthread_mutex_unlock(&T1T2_mutex);
 
-	for (int i = 0; i < OUTERLOOP; i++){
-	    for (int j = 0; j < INNERLOOP; j++){
-	    	pthread_mutex_lock(&T1T2_mutex);
-	    	T1T2 += 1;
-	    	pthread_mutex_unlock(&T1T2_mutex);
-	    	pthread_mutex_lock(&T1T4_mutex);
-	    	T1T4 += 1;
-	    	pthread_mutex_unlock(&T1T4_mutex);
-	    }
+	pthread_mutex_lock(&T1T4_mutex);
+	clock_gettime(CLOCK_REALTIME, &start_2);
+	wastetime();
+	T1T4 += 1;
+	clock_gettime(CLOCK_REALTIME, &start_2);
+	pthread_mutex_unlock(&T1T4_mutex);
+
+	Z12 = 1000000000*(start_1.tv_sec - end_1.tv_sec) + (start_1.tv_nsec-end_1.tv_nsec);
+	Z14 = 1000000000*(start_2.tv_sec - end_2.tv_sec) + (start_2.tv_nsec-end_2.tv_nsec);
+
+	if (Z12>Z14){
+		blocking1 = Z12; 
+	}
+	else if (Z14>Z12){
+		blocking2 = Z14;
 	}
 
   	//print the id of the current task
-  	printf("Variable written.");
+  	printf(".");
   	printf(" ]1 "); fflush(stdout);
 }
 
@@ -280,19 +332,32 @@ void task2_code()
 	//print the id of the current task
   	printf(" 2[ "); fflush(stdout);
 
-  	for (int i = 0; i < OUTERLOOP; i++){
-	    for (int j = 0; j < INNERLOOP; j++){
-	    	pthread_mutex_lock(&T2T3_mutex);
-	    	T2T3 += 1;
-	    	pthread_mutex_unlock(&T2T3_mutex);
-	    }
-	}
+	pthread_mutex_lock(&T2T3_mutex);
+	clock_gettime(CLOCK_REALTIME, &start_2);
+	wastetime();
+	T2T3 += 1;
+	clock_gettime(CLOCK_REALTIME, &end_2);
+	pthread_mutex_unlock(&T2T3_mutex);
+
 	pthread_mutex_lock(&T1T2_mutex);
-	printf("T1T2 = %d read, T2T3 written.", T1T2); fflush(stdout);
+	clock_gettime(CLOCK_REALTIME, &start_3);
+	wastetime();
+	printf("%d", T1T2); fflush(stdout);
+	clock_gettime(CLOCK_REALTIME, &end_3);
 	pthread_mutex_unlock(&T1T2_mutex);
+
 	//print the id of the current task
   	printf(" ]2 "); fflush(stdout);
 
+  	Z12a = 1000000000*(start_2.tv_sec - end_2.tv_sec) + (start_2.tv_nsec-end_2.tv_nsec);
+  	Z23 = 1000000000*(start_3.tv_sec - end_3.tv_sec) + (start_3.tv_nsec-end_3.tv_nsec);
+
+  	if (Z12a>Z23){
+  		blocking2 = Z12a;
+  	}
+  	else if(Z23>Z12a){
+  		blocking2 = Z23;
+  	}
 }
 
 
@@ -321,11 +386,16 @@ void task3_code()
 	//print the id of the current task
   	printf(" 3[ "); fflush(stdout);
   	pthread_mutex_lock(&T2T3_mutex);
-	printf("T2T3 = %d read.", T2T3); 
+  	clock_gettime(CLOCK_REALTIME, &start_4);
+  	wastetime();
+	printf("%d", T2T3); 
+	clock_gettime(CLOCK_REALTIME, &end_4);
 	pthread_mutex_unlock(&T2T3_mutex);
 	fflush(stdout);
 	//print the id of the current task
   	printf(" ]3 "); fflush(stdout);
+
+  	blocking3 = 1000000000*(start_4.tv_sec - end_4.tv_sec) + (start_4.tv_nsec-end_4.tv_nsec);
 }
 
 void *task3( void *ptr)
@@ -353,11 +423,15 @@ void task4_code()
 	//print the id of the current task
   	printf(" 4[ "); fflush(stdout);
   	pthread_mutex_lock(&T1T4_mutex);
-	printf("T1T4 = %d read.", T1T4); 
+  	clock_gettime(CLOCK_REALTIME, &start_5);
+  	wastetime();
+	printf("%d", T1T4); 
+	clock_gettime(CLOCK_REALTIME, &end_5);
 	pthread_mutex_unlock(&T1T4_mutex);
 	fflush(stdout);
 	//print the id of the current task
   	printf(" ]4 "); fflush(stdout);
+  	blocking4 = 1000000000*(start_5.tv_sec - end_5.tv_sec) + (start_5.tv_nsec-end_5.tv_nsec);
 }
 
 void *task4( void *ptr)
