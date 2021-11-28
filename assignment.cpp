@@ -12,8 +12,8 @@
 // Initialisations of different parameters, like number of loops in wastetime()
 // and number of periodic and aperiodic tasks.
 
-#define INNERLOOP 100
-#define OUTERLOOP 100
+#define INNERLOOP 1000
+#define OUTERLOOP 500
 
 #define NPERIODICTASKS 4
 #define NAPERIODICTASKS 0
@@ -52,7 +52,7 @@ pthread_mutex_t T2T3_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct timespec start_1, end_1, start_2, end_2, start_3, end_3, start_4, end_4, start_5, end_5, start_6, end_6;
 double Z11, Z12, Z22, Z21, Z31, Z41;
-double B1 = pow(10,9), B2 = pow(10,9), B3 = pow(10,9), B4 = pow(10,9);
+double B1 = 0, B2 = 0, B3 = 0, B4 = 0;
 double betastar1[2], 
 	   betastar2[2], 
 	   betastar3[1], 
@@ -179,27 +179,24 @@ int main()
     // Computing blocking times.
 
     for(int i = 0; i <sizeof(betastar1)/sizeof(betastar1[0]); i++){
-    	if(betastar1[i]<B1){
+    	if(betastar1[i]>B1){
     		B1 = betastar1[i];
     	}
     }
     for(int i = 0; i <sizeof(betastar2)/sizeof(betastar2[0]); i++){
-    	if(betastar1[i]<B2){
+    	if(betastar1[i]>B2){
     		B2 = betastar2[i];
     	}
     }
     for(int i = 0; i <sizeof(betastar3)/sizeof(betastar3[0]); i++){
-    	if(betastar3[i]<B3){
+    	if(betastar3[i]>B3){
     		B3 = betastar3[i];
     	}
     }
     for(int i = 0; i <sizeof(betastar4)/sizeof(betastar4[0]); i++){
-    	if(betastar4[i]<B4){
+    	if(betastar4[i]>B4){
     		B4 = betastar4[i];
     	}
-    }
-    if(B4 == pow(10,9)){
-    	B4 = 0;
     }
 
     // Printing blocking times to check some errors.
@@ -258,27 +255,34 @@ int main()
   	for (int i = 0; i < NPERIODICTASKS; i++){
 
 		// Initializing attribute structure of i-task.
+
       	pthread_attr_init(&(attributes[i]));
 
 		// Setting attributes to tell the kernel that priorities and policies are explicitly chosen.
+
       	pthread_attr_setinheritsched(&(attributes[i]), PTHREAD_EXPLICIT_SCHED);
       
 		// Setting attributes to set the SCHED_FIFO policy.
+
 		pthread_attr_setschedpolicy(&(attributes[i]), SCHED_FIFO);
 
 		// Setting the parameters to assign the priority (inversely proportional).
+
       	parameters[i].sched_priority = priomin.sched_priority + NTASKS - i;
 
 		// Setting attributes and parameters of the current thread.
+
       	pthread_attr_setschedparam(&(attributes[i]), &(parameters[i]));
     }
 
     // Declaring and initializing attributes of the mutexes, setting the protocol of 
     // mymutexattr.
+
     pthread_mutexattr_t mymutexattr; pthread_mutexattr_init(&mymutexattr); 
 	pthread_mutexattr_setprotocol(&mymutexattr, PTHREAD_PRIO_PROTECT);
 
 	// Assigning priority to each single mutex.
+
 	pthread_mutexattr_setprioceiling(&mymutexattr, parameters[0].sched_priority); 
 	pthread_mutex_init(&T1T2_mutex, &mymutexattr); 
 	pthread_mutexattr_setprioceiling(&mymutexattr, parameters[1].sched_priority); 
@@ -287,15 +291,17 @@ int main()
 	pthread_mutex_init(&T1T4_mutex, &mymutexattr);
 
 	// Declaring the variable containing return values of pthread_create.
+
   	int iret[NTASKS];
 
 	// Declaring variables to read the current time.
+
 	struct timespec time_1;
 	clock_gettime(CLOCK_REALTIME, &time_1);
 
   	// Setting the next arrival time for each single task.
-  	for (int i = 0; i < NPERIODICTASKS; i++){
 
+  	for (int i = 0; i < NPERIODICTASKS; i++){
 		long int next_arrival_nanoseconds = time_1.tv_nsec + periods[i];
 		next_arrival_time[i].tv_nsec= next_arrival_nanoseconds%1000000000;
 		next_arrival_time[i].tv_sec= time_1.tv_sec + next_arrival_nanoseconds/1000000000;
@@ -303,80 +309,92 @@ int main()
     	}
 
 	// Creating all threads.
+
   	iret[0] = pthread_create( &(thread_id[0]), &(attributes[0]), task1, NULL);
   	iret[1] = pthread_create( &(thread_id[1]), &(attributes[1]), task2, NULL);
   	iret[2] = pthread_create( &(thread_id[2]), &(attributes[2]), task3, NULL);
   	iret[3] = pthread_create( &(thread_id[3]), &(attributes[3]), task4, NULL);
 
   	// Joining all threads.
+
   	pthread_join( thread_id[0], NULL);
   	pthread_join( thread_id[1], NULL);
   	pthread_join( thread_id[2], NULL);
   	pthread_join( thread_id[3], NULL);
 
   	// Printing all the variables.
+
   	printf("\nThe variables are:\n");
   	printf("T1T2 = %d\n", T1T2);
   	printf("T1T4 = %d\n", T1T4);
-  	printf("T2T3 = %d\n", T2T3);
+  	printf("T2T3 = %d\n\n", T2T3);
 
   	// Printing all missed deadlines.
+
   	for (int i = 0; i < NTASKS; i++){
-      	printf ("\nMissed Deadlines Task %d=%d\n", i, missed_deadlines[i]);
+      	printf ("Missed Deadlines Task %d=%d\n", i, missed_deadlines[i]);
 		fflush(stdout);
     }
+
+    // Closing the process.
+
   	exit(0);
 }
 
-// application specific task_1 code
+// Task 1 application.
+
 void task1_code()
 {
-	//print the id of the current task
-  	printf(" 1[ "); fflush(stdout);
-	pthread_mutex_lock(&T1T2_mutex);
-	clock_gettime(CLOCK_REALTIME, &start_1);
-	wastetime();
-	T1T2 += 1;
-	clock_gettime(CLOCK_REALTIME, &end_1);
-	pthread_mutex_unlock(&T1T2_mutex);
+	// Print the ID of the current task.
 
-	pthread_mutex_lock(&T1T4_mutex);
-	clock_gettime(CLOCK_REALTIME, &start_2);
+  	printf(" 1[ "); fflush(stdout);
+
+  	// Entering in the critical zones.
+
+	pthread_mutex_lock(&T1T2_mutex);			// Locking the mutex.
+	clock_gettime(CLOCK_REALTIME, &start_1);	// Starting the calculating time.
 	wastetime();
-	T1T4 += 1;
-	clock_gettime(CLOCK_REALTIME, &end_2);
-	pthread_mutex_unlock(&T1T4_mutex);
+	T1T2 += 1;									// Writing T1T2.
+	clock_gettime(CLOCK_REALTIME, &end_1);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T2_mutex);			// Unlocking the mutex.
+
+	pthread_mutex_lock(&T1T4_mutex);			// Locking the mutex.
+	clock_gettime(CLOCK_REALTIME, &start_2);	// Starting the calculating time.
+	wastetime();	
+	T1T4 += 1;									// Writing T1T4.
+	clock_gettime(CLOCK_REALTIME, &end_2);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T4_mutex);			// Unlocking the mutex.
+
+	// Calculating the time for each critical zone.
 
 	Z11 = 1000000000*(end_1.tv_sec - start_1.tv_sec) + (end_1.tv_nsec-start_1.tv_nsec);
 	Z12 = 1000000000*(end_2.tv_sec - end_2.tv_sec) + (end_2.tv_nsec-start_2.tv_nsec);
 
-  	//print the id of the current task
+  	// Print the ID of the current task.
+
   	printf(" ]1 "); fflush(stdout);
 }
 
-//thread code for task_1 (used only for temporization)
+// Thread code for task 1.
+
 void *task1( void *ptr)
 {
-	// set thread affinity, that is the processor on which threads shall run
+	// Setting thread affinity.
+
 	cpu_set_t cset;
 	CPU_ZERO (&cset);
 	CPU_SET(0, &cset);
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
 
-	/*struct timespec waittime;
-	waittime.tv_sec = 0;
-	waittime.tv_nsec = periods[0];*/
-
-   	//execute the task one hundred times... it should be an infinite loop (too dangerous)
+   	// Executing the task 100 times.
 
   	for (int i = 0; i < 100; i++)
     	{
-      		// execute application specific code
+      		// Executing application code.
 
 			task1_code();
 
-			// it would be nice to check if we missed a deadline here... why don't
-			// you try by yourself?
+			// Checking for missing deadlines.
 
 			struct timespec currenttime;
 			clock_gettime(CLOCK_REALTIME, &currenttime);
@@ -385,19 +403,20 @@ void *task1( void *ptr)
 
 			if(currenttimed>arrivaltime) missed_deadlines[0]++;
 
-			// sleep until the end of the current period (which is also the start of the
-			// new one
+			// Sleeping until the end of the current period (which is also the start of the
+			// new one.
 
 			clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[0], NULL);
 
-			// the thread is ready and can compute the end of the current period for
-			// the next iteration
+			// The thread is ready again.
 
 			long int next_arrival_nanoseconds = next_arrival_time[0].tv_nsec + periods[0];
 			next_arrival_time[0].tv_nsec= next_arrival_nanoseconds%1000000000;
 			next_arrival_time[0].tv_sec= next_arrival_time[0].tv_sec + next_arrival_nanoseconds/1000000000;
     	}
 }
+
+// Task 2 application.
 
 void task2_code()
 {
