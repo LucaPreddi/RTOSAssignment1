@@ -420,42 +420,56 @@ void *task1( void *ptr)
 
 void task2_code()
 {
-	//print the id of the current task
+	// Print the ID of the current task.
+
   	printf(" 2[ "); fflush(stdout);
 
-	pthread_mutex_lock(&T2T3_mutex);
-	clock_gettime(CLOCK_REALTIME, &start_3);
-	wastetime();
-	T2T3 += 1;
-	clock_gettime(CLOCK_REALTIME, &end_3);
-	pthread_mutex_unlock(&T2T3_mutex);
+  	// Entering in the critical zones.
 
-	pthread_mutex_lock(&T1T2_mutex);
-	clock_gettime(CLOCK_REALTIME, &start_4);
+	pthread_mutex_lock(&T2T3_mutex);			// Locking the mutex.
+	clock_gettime(CLOCK_REALTIME, &start_3);	// Starting the calculating time.
 	wastetime();
-	int readingT1T2 = T1T2;
-	clock_gettime(CLOCK_REALTIME, &end_4);
-	pthread_mutex_unlock(&T1T2_mutex);
+	T2T3 += 1;									// Writing T2T3;
+	clock_gettime(CLOCK_REALTIME, &end_3);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T2T3_mutex);			// Unlocking the mutex
 
-	//print the id of the current task
+	pthread_mutex_lock(&T1T2_mutex);			// Locking the mutex.
+	clock_gettime(CLOCK_REALTIME, &start_4);	// Starting the calculating time.
+	wastetime();
+	int readingT1T2 = T1T2;						
+	clock_gettime(CLOCK_REALTIME, &end_4);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T2_mutex);			// Unlocking the mutex.
+
+	// Print the ID of the current task.
+
   	printf(" ]2 "); fflush(stdout);
+
+  	// Calculating the time for each critical zone.
 
   	Z22 = 1000000000*(end_3.tv_sec - start_3.tv_sec) + (end_3.tv_nsec-start_3.tv_nsec);
   	Z21 = 1000000000*(end_4.tv_sec - start_4.tv_sec) + (end_4.tv_nsec-start_4.tv_nsec);
 }
 
+// Thread code for task 2.
 
 void *task2( void *ptr )
 {
-	// set thread affinity, that is the processor on which threads shall run
+	// Setting thread affinity.
+
 	cpu_set_t cset;
 	CPU_ZERO (&cset);
 	CPU_SET(0, &cset);
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
 
+	// Executing the task 100 times.
+
   	for (int i = 0; i < 100; i++)
     	{
+    		// Executing application code.
+
       		task2_code();
+
+      		// Checking for missing deadlines.
 
       		struct timespec currenttime;
 			clock_gettime(CLOCK_REALTIME, &currenttime);
@@ -464,41 +478,63 @@ void *task2( void *ptr )
 
 			if(currenttimed>arrivaltime) missed_deadlines[1]++;
 
+			// Sleeping until the end of the current period (which is also the start of the
+			// new one
+
 			clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[1], NULL);
+
 			long int next_arrival_nanoseconds = next_arrival_time[1].tv_nsec + periods[1];
 			next_arrival_time[1].tv_nsec= next_arrival_nanoseconds%1000000000;
 			next_arrival_time[1].tv_sec= next_arrival_time[1].tv_sec + next_arrival_nanoseconds/1000000000;
     	}
 }
 
+// Task 3 application.
+
 void task3_code()
 {
-	//print the id of the current task
+	// Print the ID of the current task.
+
   	printf(" 3[ "); fflush(stdout);
-  	pthread_mutex_lock(&T2T3_mutex);
-  	clock_gettime(CLOCK_REALTIME, &start_5);
+
+  	// Entering in the critical zones.
+
+  	pthread_mutex_lock(&T2T3_mutex);			// Locking the mutex.
+  	clock_gettime(CLOCK_REALTIME, &start_5);	// Starting the calculating time.
   	wastetime();
-	int readingT2T3 = T2T3; 
-	clock_gettime(CLOCK_REALTIME, &end_5);
-	pthread_mutex_unlock(&T2T3_mutex);
-	fflush(stdout);
-	//print the id of the current task
+	int readingT2T3 = T2T3; 					// Reading T2T3.
+	clock_gettime(CLOCK_REALTIME, &end_5);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T2T3_mutex);			// Unlocking the mutex.
+
+	// Print the ID of the current task.
+
   	printf(" ]3 "); fflush(stdout);
+
+	// Calculating the time for each critical zone.
 
   	Z31 = 1000000000*(end_5.tv_sec - start_5.tv_sec) + (end_5.tv_nsec-start_5.tv_nsec);
 }
 
+// Thread code for task 3.
+
 void *task3( void *ptr)
 {
-	// set thread affinity, that is the processor on which threads shall run
+	// Setting thread affinity.
+
 	cpu_set_t cset;
 	CPU_ZERO (&cset);
 	CPU_SET(0, &cset);
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
 
+	// Executing the task 100 times.
+
   	for (int i = 0; i < 100; i++)
-    	{
+    	{	
+    		// Executing application code.
+
       		task3_code();
+
+      		// Checking for missing deadlines.
 
       		struct timespec currenttime;
 			clock_gettime(CLOCK_REALTIME, &currenttime);
@@ -507,41 +543,66 @@ void *task3( void *ptr)
 
 			if(currenttimed>arrivaltime) missed_deadlines[2]++;
 
+			// Sleeping until the end of the current period (which is also the start of the
+			// new one.
+
 			clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[2], NULL);
+
+			// The thread is ready again.
+
 			long int next_arrival_nanoseconds = next_arrival_time[2].tv_nsec + periods[2];
 			next_arrival_time[2].tv_nsec = next_arrival_nanoseconds%1000000000;
 			next_arrival_time[2].tv_sec = next_arrival_time[2].tv_sec + next_arrival_nanoseconds/1000000000;
     }
 }
 
+// Task 2 application.
+
 void task4_code()
 {
-	//print the id of the current task
+
+	// Print the ID of the current task.
+
   	printf(" 4[ "); fflush(stdout);
-  	pthread_mutex_lock(&T1T4_mutex);
-  	clock_gettime(CLOCK_REALTIME, &start_6);
+
+  	// Entering in the critical zones.
+
+  	pthread_mutex_lock(&T1T4_mutex);			// Locking the mutex.
+  	clock_gettime(CLOCK_REALTIME, &start_6);	// Starting the calculating time.
   	wastetime();
-	int readingT1T4 = T1T4; 
-	clock_gettime(CLOCK_REALTIME, &end_6);
-	pthread_mutex_unlock(&T1T4_mutex);
-	fflush(stdout);
-	//print the id of the current task
-  	printf(" ]4 "); fflush(stdout);
+	int readingT1T4 = T1T4; 					// Reading T1T4.
+	clock_gettime(CLOCK_REALTIME, &end_6);		// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T4_mutex);			// Unlocking the mutex.
+
+  	// Calculating the time for each critical zone.
 
   	Z41 = 1000000000*(end_6.tv_sec - start_6.tv_sec) + (end_6.tv_nsec-start_6.tv_nsec);
+
+  	// Print the ID of the current task.
+
+  	printf(" ]4 "); fflush(stdout);
 }
+
+// Thread code for task 4.
 
 void *task4( void *ptr)
 {
-	// set thread affinity, that is the processor on which threads shall run
+	// Setting thread affinity.
+
 	cpu_set_t cset;
 	CPU_ZERO (&cset);
 	CPU_SET(0, &cset);
 	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
 
+	// Executing the task 100 times.
+
   	for (int i = 0; i < 100; i++){
 
+  		// Executing application code.
+
       	task4_code();
+
+      	// Checking for missing deadlines.
 
       	struct timespec currenttime;
 		clock_gettime(CLOCK_REALTIME, &currenttime);
@@ -550,7 +611,13 @@ void *task4( void *ptr)
 
 		if(currenttimed>arrivaltime) missed_deadlines[3]++;
 
+		// Sleeping until the end of the current period (which is also the start of the
+		// new one.
+
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[3], NULL);
+
+		// The thread is ready again.
+
 		long int next_arrival_nanoseconds = next_arrival_time[3].tv_nsec + periods[3];
 		next_arrival_time[3].tv_nsec = next_arrival_nanoseconds%1000000000;
 		next_arrival_time[3].tv_sec = next_arrival_time[3].tv_sec + next_arrival_nanoseconds/1000000000;
