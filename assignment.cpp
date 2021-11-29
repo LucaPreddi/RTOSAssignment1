@@ -1,40 +1,35 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//													//
-//	Assignment 1 of Real-Time Operating Systems class of ROBOTICS ENGINEERING first year.	//
-//					Luca Predieri mat. 4667708					//
-//													//
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//													//
-//	I decided to get into the problem by approaching the request first on paper, reasoni-	//	
-//	ng with all the theory discussed in the lectures and then putting what I got on the 	//
-//	code. First of all I decided to decide where were the critical zones. We can say that	//
-//	we have 6 different zones:									//
-//	- Z11: writing T1T2 in memory.								//
-//	- Z12: writing T1T4 in memory.								//
-//	- Z22: writing T2T3 in memory.								//
-//	- Z21: reading T1T2 from the memory.								//
-//	- Z31: reading T2T3 from the memory.								//
-//	- Z41: reading T1T4 from the memory.								//
-//	After knowing the critical zones we can finally build β*i groups, these are:			//
-//	- β*1 = {Z21, Z41}										//
-//	- β*2 = {Z31, Z41}										//
-//	- β*3 = {Z41}											//
-//	- β*4 = {0[empty]}										//
-//	Then we can get from these groups the blocking time for each single task by taking the 	//
-//	highest value inside the group. We need the blocking time to calculate the U for each 	//
-//	single task and by computing even the Ulub we can get if the tasks are schedulable. we	//
-//	need to do this because we're using priority ceiling with the semaphores, so we need	//
-//	to use this kind of formula. After calculating the schedulability we can assign the pr-	//
-//	iority to semaphores, as long as we have 3 critical zones (3 different memory location)	//
-//	we have three different mutexes:								//
-//	- PT1T2: with the priority of the task 1.							//
-//	- PT1T4: with the priority of the task 1.							//
-//	- PT2T3: with the priority of the task 2.							//
-//	then we can start the tasks. What we can see is a the wastingtime() function that I ma-	//
-//	de to lose some time, so we get a longer computational time (U↑) in order to see if th-	//
-//	e check of the schedulability actually works.							//
-//													//
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//	Assignment 1 of Real-Time Operating Systems class of ROBOTICS ENGINEERING first year.
+//	Luca Predieri mat. 4667708
+
+//	I decided to get into the problem by approaching the request first on paper, reasoni-	
+//	ng with all the theory discussed in the lectures and then putting what I got on the
+//	code. First of all I decided to decide where were the critical zones. We can say that
+//	we have 6 different zones:
+//	- Z11: writing T1T2 in memory.						
+//	- Z12: writing T1T4 in memory.						
+//	- Z22: writing T2T3 in memory.						
+//	- Z21: reading T1T2 from the memory.						
+//	- Z31: reading T2T3 from the memory.							
+//	- Z41: reading T1T4 from the memory.					
+//	After knowing the critical zones we can finally build β*i groups, these are:	
+//	- β*1 = {Z21, Z41}							
+//	- β*2 = {Z31, Z41}							
+//	- β*3 = {Z41}								
+//	- β*4 = {0[empty]}								
+//	Then we can get from these groups the blocking time for each single task by taking the 
+//	highest value inside the group. We need the blocking time to calculate the U for each 
+//	single task and by computing even the Ulub we can get if the tasks are schedulable. we
+//	need to do this because we're using priority ceiling with the semaphores, so we need
+//	to use this kind of formula. After calculating the schedulability we can assign the pr-
+//	iority to semaphores, as long as we have 3 critical zones (3 different memory location)
+//	we have three different mutexes:						
+//	- PT1T2: with the priority of the task 1.				
+//	- PT1T4: with the priority of the task 1.					
+//	- PT2T3: with the priority of the task 2.			
+//	then we can start the tasks. What we can see is a the wastingtime() function that I ma-
+//	de to lose some time, so we get a longer computational time (U↑) in order to see if th-
+//	e check of the schedulability actually works.					
 
 // Compile with: 
 // g++ assignment.cpp -pthread -o assignment
