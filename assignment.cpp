@@ -1,7 +1,7 @@
 //
 //	Assignment 1 of Real-Time Operating Systems class of ROBOTICS ENGINEERING first year.
 //	Luca Predieri mat. 4667708
-
+//
 //	I decided to get into the problem by approaching the request first on paper, reasoni-	
 //	ng with all the theory discussed in the lectures and then putting what I got on the
 //	code. First of all I decided to decide where were the critical zones. We can say that
@@ -384,19 +384,19 @@ void task1_code()
 
   	// Entering in the critical zones.
 
-	pthread_mutex_lock(&T1T2_mutex);			// Locking the mutex.
+	pthread_mutex_lock(&T1T2_mutex);		// Locking the mutex.
 	clock_gettime(CLOCK_REALTIME, &start_1);	// Starting the calculating time.
 	wastetime();
-	T1T2 += 1;									// Writing T1T2.
-	clock_gettime(CLOCK_REALTIME, &end_1);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T1T2_mutex);			// Unlocking the mutex.
+	T1T2 += 1;					// Writing T1T2.
+	clock_gettime(CLOCK_REALTIME, &end_1);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T2_mutex);		// Unlocking the mutex.	
 
-	pthread_mutex_lock(&T1T4_mutex);			// Locking the mutex.
+	pthread_mutex_lock(&T1T4_mutex);		// Locking the mutex.
 	clock_gettime(CLOCK_REALTIME, &start_2);	// Starting the calculating time.
 	wastetime();	
-	T1T4 += 1;									// Writing T1T4.
-	clock_gettime(CLOCK_REALTIME, &end_2);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T1T4_mutex);			// Unlocking the mutex.
+	T1T4 += 1;					// Writing T1T4.
+	clock_gettime(CLOCK_REALTIME, &end_2);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T4_mutex);		// Unlocking the mutex.
 
 	// Calculating the time for each critical zone.
 
@@ -423,7 +423,7 @@ void *task1( void *ptr)
 
   	for (int i = 0; i < 100; i++)
     	{
-      		// Executing application code.
+      			// Executing application code.
 
 			task1_code();
 
@@ -459,19 +459,19 @@ void task2_code()
 
   	// Entering in the critical zones.
 
-	pthread_mutex_lock(&T2T3_mutex);			// Locking the mutex.
+	pthread_mutex_lock(&T2T3_mutex);		// Locking the mutex.
 	clock_gettime(CLOCK_REALTIME, &start_3);	// Starting the calculating time.
 	wastetime();
-	T2T3 += 1;									// Writing T2T3;
-	clock_gettime(CLOCK_REALTIME, &end_3);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T2T3_mutex);			// Unlocking the mutex
+	T2T3 += 1;					// Writing T2T3;
+	clock_gettime(CLOCK_REALTIME, &end_3);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T2T3_mutex);		// Unlocking the mutex
 
-	pthread_mutex_lock(&T1T2_mutex);			// Locking the mutex.
+	pthread_mutex_lock(&T1T2_mutex);		// Locking the mutex.
 	clock_gettime(CLOCK_REALTIME, &start_4);	// Starting the calculating time.
 	wastetime();
 	int readingT1T2 = T1T2;						
-	clock_gettime(CLOCK_REALTIME, &end_4);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T1T2_mutex);			// Unlocking the mutex.
+	clock_gettime(CLOCK_REALTIME, &end_4);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T2_mutex);		// Unlocking the mutex.
 
 	// Print the ID of the current task.
 
@@ -532,12 +532,12 @@ void task3_code()
 
   	// Entering in the critical zones.
 
-  	pthread_mutex_lock(&T2T3_mutex);			// Locking the mutex.
+  	pthread_mutex_lock(&T2T3_mutex);		// Locking the mutex.
   	clock_gettime(CLOCK_REALTIME, &start_5);	// Starting the calculating time.
   	wastetime();
-	int readingT2T3 = T2T3; 					// Reading T2T3.
-	clock_gettime(CLOCK_REALTIME, &end_5);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T2T3_mutex);			// Unlocking the mutex.
+	int readingT2T3 = T2T3; 			// Reading T2T3.
+	clock_gettime(CLOCK_REALTIME, &end_5);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T2T3_mutex);		// Unlocking the mutex.
 
 	// Print the ID of the current task.
 
@@ -600,12 +600,12 @@ void task4_code()
 
   	// Entering in the critical zones.
 
-  	pthread_mutex_lock(&T1T4_mutex);			// Locking the mutex.
+  	pthread_mutex_lock(&T1T4_mutex);		// Locking the mutex.
   	clock_gettime(CLOCK_REALTIME, &start_6);	// Starting the calculating time.
   	wastetime();
-	int readingT1T4 = T1T4; 					// Reading T1T4.
-	clock_gettime(CLOCK_REALTIME, &end_6);		// Finishing the calculating time.
-	pthread_mutex_unlock(&T1T4_mutex);			// Unlocking the mutex.
+	int readingT1T4 = T1T4; 			// Reading T1T4.
+	clock_gettime(CLOCK_REALTIME, &end_6);	// Finishing the calculating time.
+	pthread_mutex_unlock(&T1T4_mutex);		// Unlocking the mutex.
 
   	// Calculating the time for each critical zone.
 
@@ -631,7 +631,7 @@ void *task4( void *ptr)
 
   	for (int i = 0; i < 100; i++){
 
-  		// Executing application code.
+  	// Executing application code.
 
       	task4_code();
 
